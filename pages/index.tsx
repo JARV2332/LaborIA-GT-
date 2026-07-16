@@ -1,5 +1,6 @@
 import type { NextPage } from "next";
 import Head from "next/head";
+import Link from "next/link";
 import {
   Scale,
   ShieldCheck,
@@ -45,7 +46,8 @@ const Home: NextPage = () => {
                 LaborIA <span style={{ color: "var(--color-brand-green)" }}>GT</span>
               </span>
             </div>
-            <button
+            <Link
+              href="/test-calculo"
               className="rounded-lg px-4 py-1.5 text-sm font-semibold transition-opacity hover:opacity-90"
               style={{
                 backgroundColor: "var(--color-brand-green)",
@@ -53,7 +55,7 @@ const Home: NextPage = () => {
               }}
             >
               Consultar ahora
-            </button>
+            </Link>
           </div>
         </nav>
 
@@ -88,7 +90,8 @@ const Home: NextPage = () => {
               Consulta tu situación laboral al instante. Sin abogados caros,
               sin filas, sin esperas.
             </p>
-            <button
+            <Link
+              href="/test-calculo"
               className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-bold shadow-lg transition-transform active:scale-95"
               style={{
                 backgroundColor: "var(--color-brand-green)",
@@ -97,7 +100,7 @@ const Home: NextPage = () => {
             >
               Empezar consulta gratis
               <ArrowRight size={18} />
-            </button>
+            </Link>
           </div>
         </section>
 
@@ -203,6 +206,7 @@ interface ServiceCardProps {
   description: string;
   tag: string;
   tagColor: "green" | "amber" | "navy";
+  href?: string;
 }
 
 const TAG_STYLES: Record<string, React.CSSProperties> = {
@@ -211,16 +215,9 @@ const TAG_STYLES: Record<string, React.CSSProperties> = {
   navy:  { backgroundColor: "#dbeafe", color: "#1e3a8a" },
 };
 
-function ServiceCard({ icon, title, description, tag, tagColor }: ServiceCardProps) {
-  return (
-    <div
-      className="flex flex-col gap-3 rounded-xl p-5 transition-shadow hover:shadow-md"
-      style={{
-        backgroundColor: "#fff",
-        border: "1px solid var(--color-surface-border)",
-        boxShadow: "var(--shadow-card)",
-      }}
-    >
+function ServiceCard({ icon, title, description, tag, tagColor, href }: ServiceCardProps) {
+  const inner = (
+    <>
       <div
         className="flex h-10 w-10 items-center justify-center rounded-lg"
         style={{ backgroundColor: "var(--color-surface-secondary)" }}
@@ -229,23 +226,49 @@ function ServiceCard({ icon, title, description, tag, tagColor }: ServiceCardPro
       </div>
       <div>
         <div className="mb-1 flex items-center gap-2">
-          <h3
-            className="text-sm font-bold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
+          <h3 className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
             {title}
           </h3>
-          <span
-            className="rounded-full px-2 py-0.5 text-xs font-semibold"
-            style={TAG_STYLES[tagColor]}
-          >
+          <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={TAG_STYLES[tagColor]}>
             {tag}
           </span>
         </div>
         <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
           {description}
         </p>
+        {href && (
+          <span
+            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold"
+            style={{ color: "var(--color-brand-green)" }}
+          >
+            Ir a calculadora <ArrowRight size={12} />
+          </span>
+        )}
       </div>
+    </>
+  );
+
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: "#fff",
+    border: "1px solid var(--color-surface-border)",
+    boxShadow: "var(--shadow-card)",
+  };
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="flex flex-col gap-3 rounded-xl p-5 transition-shadow hover:shadow-md"
+        style={cardStyle}
+      >
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-xl p-5" style={cardStyle}>
+      {inner}
     </div>
   );
 }
@@ -258,6 +281,7 @@ const SERVICES: ServiceCardProps[] = [
     description: "Revisa si tus prestaciones de ley están correctamente calculadas.",
     tag: "Más consultado",
     tagColor: "green",
+    href: "/test-calculo",
   },
   {
     icon: <FileText size={20} style={{ color: "var(--color-brand-navy)" }} />,
@@ -279,6 +303,7 @@ const SERVICES: ServiceCardProps[] = [
     description: "Calcula lo que te corresponde al finalizar tu relación laboral.",
     tag: "Popular",
     tagColor: "navy",
+    href: "/test-calculo",
   },
   {
     icon: <Users size={20} style={{ color: "var(--color-brand-green)" }} />,

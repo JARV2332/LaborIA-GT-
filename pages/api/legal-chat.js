@@ -91,11 +91,13 @@ REGLAS DE RESPUESTA OBLIGATORIAS:
 7. Si no tenés certeza, decilo honestamente y recomendá consultar con el MINTRAB o un abogado
 8. Limitá la respuesta a máximo 250 palabras para que sea fácil de leer en móvil
 9. Usá emojis con moderación para hacer el texto más amigable
+10. Si alguien te saluda o pregunta algo fuera del tema laboral, respondé amablemente y redirigí la conversación a temas laborales guatemaltecos. Nunca ignores al usuario.
+11. SIEMPRE respondé únicamente con el objeto JSON indicado, sin texto previo ni posterior, sin bloques de código, sin markdown.
 
-FORMATO DE RESPUESTA JSON (devolvé SOLO esto, sin markdown extra):
+Tu respuesta debe ser EXCLUSIVAMENTE este objeto JSON (nada más):
 {
-  "respuesta": "Respuesta en español chapín (máx 250 palabras)",
-  "ley": "Artículo(s) y decreto(s) específicos que respaldan la respuesta",
+  "respuesta": "Respuesta en español chapín (máx 250 palabras). Nunca incluyas JSON aquí, solo texto natural.",
+  "ley": "Artículo(s) y decreto(s) específicos, o cadena vacía si no aplica ley específica",
   "categoria": "salario|jornada|prestaciones|despido|igss|documentos|acoso|maternidad|general",
   "urgente": true o false
 }`;
@@ -136,7 +138,8 @@ export default async function handler(req, res) {
     const completion = await openai.chat.completions.create({
       model,
       max_tokens: 600,
-      temperature: 0.4, // Un poco más creativo que el análisis de documentos
+      temperature: 0.4,
+      response_format: { type: "json_object" }, // Fuerza JSON puro — Groq lo soporta
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         ...mensajesHistorial,
@@ -145,15 +148,31 @@ export default async function handler(req, res) {
     });
 
     const rawText = completion.choices[0]?.message?.content?.trim() ?? "";
-    const jsonText = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+
+    // Extraer JSON de forma robusta — busca el primer { y el último }
+    let jsonText = rawText;
+    const firstBrace = rawText.indexOf("{");
+    const lastBrace = rawText.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      jsonText = rawText.slice(firstBrace, lastBrace + 1);
+    } else {
+      // Fallback: quitar fences de markdown si los hubiera
+      jsonText = rawText.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+    }
 
     let parsed;
     try {
       parsed = JSON.parse(jsonText);
+      // Sanidad: asegurarse de que respuesta no contenga JSON incrustado
+      if (typeof parsed.respuesta === "string" && parsed.respuesta.includes('{"respuesta"')) {
+        const innerMatch = parsed.respuesta.match(/^([\s\S]*?)\s*\{[\s\S]*\}[\s\S]*$/);
+        parsed.respuesta = innerMatch ? innerMatch[1].trim() : parsed.respuesta.split("{")[0].trim();
+      }
     } catch {
-      // Si el modelo no devuelve JSON válido, envolver el texto como respuesta
+      // Último recurso: mostrar el texto limpio sin JSON
+      const textoLimpio = rawText.replace(/\{[\s\S]*\}/g, "").trim();
       return res.status(200).json({
-        respuesta: rawText || "No pude generar una respuesta en este momento. Intentá de nuevo.",
+        respuesta: textoLimpio || "No pude generar una respuesta en este momento. Intentá de nuevo.",
         ley: "Código de Trabajo de Guatemala (Decreto 1441)",
         categoria: "general",
         urgente: false,

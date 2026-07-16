@@ -7,6 +7,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { Scale, ArrowLeft, ShieldCheck } from "lucide-react";
 import DefenseDashboard from "@/components/DefenseDashboard";
+import ActionTools from "@/components/ActionTools";
 import { useLaborContext } from "@/context/LaborContext";
 
 const ResultadosPage: NextPage = () => {
@@ -68,6 +69,9 @@ const ResultadosPage: NextPage = () => {
           </div>
 
           <DefenseDashboard />
+
+          {/* Herramientas de acción: PDF + mensajes */}
+          <ActionTools />
         </div>
       </div>
 

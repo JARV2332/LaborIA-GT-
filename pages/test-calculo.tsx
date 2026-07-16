@@ -9,6 +9,7 @@ import {
   calculatePrestaciones,
   formatearQuetzales,
   formatearTiempoLaborado,
+  type ResultadoPrestaciones,
 } from "@/utils/laborCalculations";
 import {
   Scale,
@@ -41,7 +42,7 @@ const INITIAL: FormState = {
 
 const TestCalculo: NextPage = () => {
   const [form, setForm] = useState<FormState>(INITIAL);
-  const [resultado, setResultado] = useState<ReturnType<typeof calculatePrestaciones> | null>(null);
+  const [resultado, setResultado] = useState<ResultadoPrestaciones | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandido, setExpandido] = useState<Record<string, boolean>>({});
 

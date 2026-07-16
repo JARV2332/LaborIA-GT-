@@ -201,11 +201,12 @@ export default function LegalConsultant() {
     enviarPregunta(faq.id, faq.pregunta);
   }
 
-  function handleInputSend() {
+  async function handleInputSend() {
     const q = inputVal.trim();
     if (!q) return;
+    setInputVal("");
 
-    // Buscar si la pregunta coincide con algún FAQ
+    // Primero verificar si coincide con un FAQ predefinido (respuesta instantánea)
     const match = FAQS.find((f) =>
       f.pregunta.toLowerCase().includes(q.toLowerCase()) ||
       q.toLowerCase().includes(f.id.replace("-", " "))
@@ -213,26 +214,59 @@ export default function LegalConsultant() {
 
     if (match) {
       enviarPregunta(match.id, q);
-    } else {
-      // Respuesta genérica si no hay match
-      const msgUsuario: Mensaje = { id: `u-${Date.now()}`, tipo: "usuario", texto: q, timestamp: new Date() };
-      setMensajes((prev) => [...prev, msgUsuario]);
-      setEscribiendo(true);
-      setTimeout(() => {
-        setEscribiendo(false);
-        setMensajes((prev) => [
-          ...prev,
-          {
-            id: `ia-${Date.now()}`,
-            tipo: "ia",
-            texto: `¡Buena pregunta! Para esa consulta específica te recomiendo usar los botones de preguntas frecuentes o ir directamente con el MINTRAB (Ministerio de Trabajo) o con un abogado laboral. Lo que sí puedo decirte es que en Guatemala el Código de Trabajo (Decreto 1441) te protege bastante bien — solo hay que saber aplicarlo.`,
-            timestamp: new Date(),
-          },
-        ]);
-      }, 1500);
+      return;
     }
 
-    setInputVal("");
+    // Pregunta libre → llamar a la API de legal-chat
+    const msgUsuario: Mensaje = { id: `u-${Date.now()}`, tipo: "usuario", texto: q, timestamp: new Date() };
+    setMensajes((prev) => [...prev, msgUsuario]);
+    setFaqExpandido(false);
+    setEscribiendo(true);
+
+    // Construir historial para contexto (últimos 6 mensajes)
+    const historial = mensajes.slice(-6).map((m) => ({
+      rol: m.tipo,
+      contenido: m.texto,
+    }));
+
+    try {
+      const response = await fetch("/api/legal-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensaje: q, historial }),
+      });
+
+      const data = await response.json();
+      setEscribiendo(false);
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al consultar.");
+      }
+
+      setMensajes((prev) => [
+        ...prev,
+        {
+          id: `ia-${Date.now()}`,
+          tipo: "ia" as const,
+          texto: data.respuesta,
+          ley: data.ley,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (err: unknown) {
+      setEscribiendo(false);
+      setMensajes((prev) => [
+        ...prev,
+        {
+          id: `ia-err-${Date.now()}`,
+          tipo: "ia" as const,
+          texto: err instanceof Error
+            ? `Lo siento, no pude procesar tu consulta: ${err.message}`
+            : "Hubo un problema de conexión. Intentá de nuevo.",
+          timestamp: new Date(),
+        },
+      ]);
+    }
   }
 
   return (

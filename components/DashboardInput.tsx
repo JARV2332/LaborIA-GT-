@@ -69,10 +69,28 @@ export default function DashboardInput() {
 
       {opcion === "B" && (
         <OpcionBDrop
-          onArchivoListo={(file) => {
+          onArchivoListo={async (file, ocrResult) => {
             setArchivoOCR(file);
+            // Si el OCR devolvió datos estructurados, pre-calcular y guardar
+            if (ocrResult?.datos) {
+              try {
+                const { datos } = ocrResult;
+                if (datos.fechaInicio && datos.fechaFin && datos.salarioBase > 0) {
+                  const res = calculatePrestaciones({
+                    fechaInicio: datos.fechaInicio,
+                    fechaFin: datos.fechaFin,
+                    salarioBase: datos.salarioBase,
+                    bonosMensuales: datos.bonosMensuales ?? 0,
+                    diasVacacionesPendientes: datos.diasVacacionesPendientes ?? 0,
+                    esDespidoUnilateral: datos.esDespidoUnilateral ?? true,
+                  });
+                  setResultado(res);
+                }
+              } catch (_) { /* silenciar — los datos del OCR pueden ser incompletos */ }
+            }
             router.push("/resultados");
           }}
+          ocrAlertas={undefined}
         />
       )}
     </div>
@@ -375,19 +393,42 @@ function OpcionAForm({
   );
 }
 
+// ─── TIPOS PARA OCR ───────────────────────────────────────────────────────────
+
+interface OCRResult {
+  datos: {
+    fechaInicio: string | null;
+    fechaFin: string;
+    salarioBase: number;
+    bonosMensuales: number;
+    diasVacacionesPendientes: number;
+    esDespidoUnilateral: boolean;
+  };
+  alertas: Array<{ nivel: "rojo" | "amarillo" | "info"; titulo: string; descripcion: string; clausula: string | null }>;
+  tipoDocumento: string;
+  resumenDocumento: string;
+  confianzaExtraccion: string;
+}
+
 // ─── OPCIÓN B: DRAG & DROP ────────────────────────────────────────────────────
 
-function OpcionBDrop({ onArchivoListo }: { onArchivoListo: (f: File) => void }) {
+function OpcionBDrop({
+  onArchivoListo,
+}: {
+  onArchivoListo: (f: File, result?: OCRResult) => void;
+  ocrAlertas?: undefined;
+}) {
   const [estado, setEstado] = useState<DroppedFileState>("idle");
   const [archivo, setArchivo] = useState<File | null>(null);
   const [progreso, setProgreso] = useState(0);
+  const [mensajeProgreso, setMensajeProgreso] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const TIPOS_VALIDOS = ["image/jpeg", "image/png", "application/pdf"];
 
   const procesarArchivo = useCallback(
-    (file: File) => {
+    async (file: File) => {
       if (!TIPOS_VALIDOS.includes(file.type)) {
         setErrorMsg("Solo se aceptan archivos JPG, PNG o PDF.");
         setEstado("error");
@@ -404,18 +445,53 @@ function OpcionBDrop({ onArchivoListo }: { onArchivoListo: (f: File) => void }) 
       setEstado("scanning");
       setProgreso(0);
 
-      // Simulación de OCR con progreso gradual
-      const PASOS = [15, 35, 55, 72, 88, 100];
-      let i = 0;
-      const intervalo = setInterval(() => {
-        setProgreso(PASOS[i]);
-        i++;
-        if (i >= PASOS.length) {
-          clearInterval(intervalo);
-          setEstado("done");
-          setTimeout(() => onArchivoListo(file), 800);
+      try {
+        // Fase 1: Leer el archivo como base64
+        setProgreso(15);
+        setMensajeProgreso("Preparando documento...");
+        const base64 = await fileToBase64(file);
+
+        // Fase 2: Llamar a la API de análisis
+        setProgreso(35);
+        setMensajeProgreso("Detectando tipo de documento...");
+
+        // Simular progreso visual mientras espera la respuesta de la API
+        const progresoInterval = setInterval(() => {
+          setProgreso((p) => {
+            if (p < 80) return p + 5;
+            return p;
+          });
+          setMensajeProgreso((m) => {
+            if (progreso < 55) return "Extrayendo cifras y fechas...";
+            if (progreso < 75) return "Verificando con el Código de Trabajo GT...";
+            return "Analizando cláusulas del documento...";
+          });
+        }, 800);
+
+        const response = await fetch("/api/analyze-document", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ base64, mimeType: file.type }),
+        });
+
+        clearInterval(progresoInterval);
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || "Error al analizar el documento.");
         }
-      }, 600);
+
+        const ocrResult: OCRResult = await response.json();
+
+        setProgreso(100);
+        setMensajeProgreso("¡Análisis completado!");
+        setEstado("done");
+
+        setTimeout(() => onArchivoListo(file, ocrResult), 800);
+      } catch (err: unknown) {
+        setEstado("error");
+        setErrorMsg(err instanceof Error ? err.message : "Error al procesar el documento.");
+      }
     },
     [onArchivoListo]
   );
@@ -533,10 +609,12 @@ function OpcionBDrop({ onArchivoListo }: { onArchivoListo: (f: File) => void }) 
               />
             </div>
             <p className="text-xs font-semibold" style={{ color: "var(--color-brand-navy)" }}>
-              {progreso < 40 && "Detectando tipo de documento..."}
-              {progreso >= 40 && progreso < 70 && "Extrayendo cifras y fechas..."}
-              {progreso >= 70 && progreso < 100 && "Verificando con el Código de Trabajo GT..."}
-              {progreso === 100 && "¡Análisis completado!"}
+              {mensajeProgreso || (
+                progreso < 40 ? "Detectando tipo de documento..." :
+                progreso < 70 ? "Extrayendo cifras y fechas..." :
+                progreso < 100 ? "Verificando con el Código de Trabajo GT..." :
+                "¡Análisis completado!"
+              )}
             </p>
 
             {/* Nombre del archivo */}
@@ -704,4 +782,18 @@ function InputField({
       />
     </div>
   );
+}
+
+// ─── HELPER: Archivo → Base64 ─────────────────────────────────────────────────
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Quitar el prefijo "data:mime/type;base64," — solo enviar los datos puros
+      resolve(result.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }

@@ -47,7 +47,7 @@ const Home: NextPage = () => {
               </span>
             </div>
             <Link
-              href="/test-calculo"
+              href="/calculadora"
               className="rounded-lg px-4 py-1.5 text-sm font-semibold transition-opacity hover:opacity-90"
               style={{
                 backgroundColor: "var(--color-brand-green)",
@@ -91,7 +91,7 @@ const Home: NextPage = () => {
               sin filas, sin esperas.
             </p>
             <Link
-              href="/test-calculo"
+              href="/calculadora"
               className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-bold shadow-lg transition-transform active:scale-95"
               style={{
                 backgroundColor: "var(--color-brand-green)",

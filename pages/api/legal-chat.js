@@ -14,6 +14,15 @@
 
 import OpenAI from "openai";
 
+function getClient() {
+  const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
+  const isGroq = !!process.env.GROQ_API_KEY;
+  return new OpenAI({
+    apiKey,
+    ...(isGroq ? { baseURL: "https://api.groq.com/openai/v1" } : {}),
+  });
+}
+
 // ─── PROMPT DEL SISTEMA — CONTEXTO RAG DEL CÓDIGO DE TRABAJO GT ──────────────
 const SYSTEM_PROMPT = `Sos un asesor legal laboral experto en el Código de Trabajo de Guatemala (Decreto 1441 del Congreso de la República) y leyes laborales complementarias. Tu misión es empoderar a los trabajadores guatemaltecos para que conozcan y defiendan sus derechos frente a patronos abusivos, con información precisa, empática y accesible.
 
@@ -108,13 +117,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "La pregunta es demasiado larga (máximo 1000 caracteres)." });
   }
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY) {
     return res.status(200).json(buildDemoResponse(mensaje));
   }
 
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const model = process.env.OPENAI_CHAT_MODEL || "gpt-4o-mini";
+    const openai = getClient();
+    const model = process.env.GROQ_CHAT_MODEL || process.env.OPENAI_CHAT_MODEL || "llama-3.3-70b-versatile";
 
     // Construir historial de conversación (máximo últimos 6 mensajes para no exceder tokens)
     const mensajesHistorial = historial

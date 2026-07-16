@@ -15,6 +15,16 @@
 
 import OpenAI from "openai";
 
+// Groq es compatible con el SDK de OpenAI — solo cambia la baseURL y la key
+function getClient() {
+  const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
+  const isGroq = !!process.env.GROQ_API_KEY;
+  return new OpenAI({
+    apiKey,
+    ...(isGroq ? { baseURL: "https://api.groq.com/openai/v1" } : {}),
+  });
+}
+
 // ─── PROMPT DEL SISTEMA ───────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `Eres un abogado laboral experto en el Código de Trabajo de Guatemala (Decreto 1441) y un analista forense de documentos. Tu única función es analizar documentos laborales guatemaltecos (contratos, finiquitos, cartas de despido, cartas de renuncia, liquidaciones) y devolver un JSON estructurado ESTRICTAMENTE en el formato indicado. NO agregues texto fuera del JSON.
 
@@ -90,14 +100,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: `Tipo de archivo no soportado: ${mimeType}. Usa JPG, PNG o PDF.` });
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    // Modo demo: devuelve datos simulados si no hay API key configurada
+  if (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY) {
     return res.status(200).json(buildDemoResponse());
   }
 
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const model = process.env.OPENAI_VISION_MODEL || "gpt-4o";
+    const openai = getClient();
+    const model = process.env.GROQ_VISION_MODEL || process.env.OPENAI_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
 
     // Para PDFs, OpenAI Vision no los acepta directamente —
     // se interpreta la primera página como imagen si viene como PNG/JPG,

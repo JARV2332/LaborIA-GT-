@@ -31,7 +31,7 @@ type DroppedFileState = "idle" | "dragging" | "scanning" | "done" | "error";
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 
 export default function DashboardInput() {
-  const { opcion, setOpcion, formData, setFormData, setArchivoOCR, setResultado } =
+  const { opcion, setOpcion, formData, setFormData, setArchivoOCR, setOcrResult, setResultado } =
     useLaborContext();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -69,24 +69,24 @@ export default function DashboardInput() {
 
       {opcion === "B" && (
         <OpcionBDrop
-          onArchivoListo={async (file, ocrResult) => {
+          onArchivoListo={async (file, apiResult) => {
             setArchivoOCR(file);
-            // Si el OCR devolvió datos estructurados, pre-calcular y guardar
-            if (ocrResult?.datos) {
-              try {
-                const { datos } = ocrResult;
-                if (datos.fechaInicio && datos.fechaFin && datos.salarioBase > 0) {
+            if (apiResult) {
+              setOcrResult(apiResult);
+              // Pre-calcular prestaciones si el OCR extrajo datos suficientes
+              if (apiResult.datos?.fechaInicio && apiResult.datos?.salarioBase > 0) {
+                try {
                   const res = calculatePrestaciones({
-                    fechaInicio: datos.fechaInicio,
-                    fechaFin: datos.fechaFin,
-                    salarioBase: datos.salarioBase,
-                    bonosMensuales: datos.bonosMensuales ?? 0,
-                    diasVacacionesPendientes: datos.diasVacacionesPendientes ?? 0,
-                    esDespidoUnilateral: datos.esDespidoUnilateral ?? true,
+                    fechaInicio: apiResult.datos.fechaInicio!,
+                    fechaFin: apiResult.datos.fechaFin,
+                    salarioBase: apiResult.datos.salarioBase,
+                    bonosMensuales: apiResult.datos.bonosMensuales ?? 0,
+                    diasVacacionesPendientes: apiResult.datos.diasVacacionesPendientes ?? 0,
+                    esDespidoUnilateral: apiResult.datos.esDespidoUnilateral ?? true,
                   });
                   setResultado(res);
-                }
-              } catch (_) { /* silenciar — los datos del OCR pueden ser incompletos */ }
+                } catch (_) { /* datos del OCR incompletos — el usuario completa en resultados */ }
+              }
             }
             router.push("/resultados");
           }}

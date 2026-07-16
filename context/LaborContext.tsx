@@ -19,17 +19,43 @@ export interface FormDataLaboral {
   esDespidoUnilateral: boolean;
 }
 
+export interface OCRAlerta {
+  nivel: "rojo" | "amarillo" | "info";
+  titulo: string;
+  descripcion: string;
+  clausula: string | null;
+}
+
+export interface OCRResult {
+  datos: {
+    fechaInicio: string | null;
+    fechaFin: string;
+    salarioBase: number;
+    bonosMensuales: number;
+    diasVacacionesPendientes: number;
+    esDespidoUnilateral: boolean;
+  };
+  alertas: OCRAlerta[];
+  tipoDocumento: string;
+  resumenDocumento: string;
+  confianzaExtraccion: string;
+}
+
 export type OpcionConsulta = "A" | "B" | null;
 
 interface LaborContextType {
   opcion: OpcionConsulta;
   formData: FormDataLaboral;
   archivoOCR: File | null;
+  ocrResult: OCRResult | null;
   resultado: ResultadoPrestaciones | null;
+  ofertaEmpresa: string;
   setOpcion: (o: OpcionConsulta) => void;
   setFormData: (patch: Partial<FormDataLaboral>) => void;
   setArchivoOCR: (f: File | null) => void;
+  setOcrResult: (r: OCRResult | null) => void;
   setResultado: (r: ResultadoPrestaciones | null) => void;
+  setOfertaEmpresa: (v: string) => void;
   resetSesion: () => void;
 }
 
@@ -53,7 +79,9 @@ export function LaborProvider({ children }: { children: ReactNode }) {
   const [opcion, setOpcion] = useState<OpcionConsulta>(null);
   const [formData, setFormDataState] = useState<FormDataLaboral>(FORM_INICIAL);
   const [archivoOCR, setArchivoOCR] = useState<File | null>(null);
+  const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
   const [resultado, setResultado] = useState<ResultadoPrestaciones | null>(null);
+  const [ofertaEmpresa, setOfertaEmpresa] = useState<string>("");
 
   function setFormData(patch: Partial<FormDataLaboral>) {
     setFormDataState((prev) => ({ ...prev, ...patch }));
@@ -63,7 +91,9 @@ export function LaborProvider({ children }: { children: ReactNode }) {
     setOpcion(null);
     setFormDataState(FORM_INICIAL);
     setArchivoOCR(null);
+    setOcrResult(null);
     setResultado(null);
+    setOfertaEmpresa("");
   }
 
   return (
@@ -72,11 +102,15 @@ export function LaborProvider({ children }: { children: ReactNode }) {
         opcion,
         formData,
         archivoOCR,
+        ocrResult,
         resultado,
+        ofertaEmpresa,
         setOpcion,
         setFormData,
         setArchivoOCR,
+        setOcrResult,
         setResultado,
+        setOfertaEmpresa,
         resetSesion,
       }}
     >

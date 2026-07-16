@@ -9,12 +9,24 @@
 
 // ─── TIPOS PÚBLICOS ───────────────────────────────────────────────────────────
 
+/**
+ * Tipo de egreso según el Código de Trabajo de Guatemala.
+ * Determina si aplica o no la indemnización por tiempo de servicio.
+ */
+export type TipoEgreso =
+  | "despido_injustificado"   // Art. 82 CT — Derecho a indemnización + irrenunciables
+  | "renuncia_voluntaria"     // Art. 83 CT — Solo irrenunciables, sin indemnización
+  | "despido_justificado"     // Art. 77 CT — Solo irrenunciables; el patrono tenía causa justa
+  | "mutuo_acuerdo";          // Potencialmente ilegal (Art. 102 CPRG); sin indemnización + alerta roja
+
 export interface CalculoPrestacionesParams {
   fechaInicio: string;
   fechaFin: string;
   salarioBase: number;
   bonosMensuales?: number;
   diasVacacionesPendientes?: number;
+  tipoEgreso?: TipoEgreso;
+  /** @deprecated Usar tipoEgreso. Mantenido solo para compatibilidad con OCR. */
   esDespidoUnilateral?: boolean;
 }
 
@@ -65,7 +77,8 @@ export interface ResultadoPrestaciones {
   metadatos: {
     fechaInicio: string;
     fechaFin: string;
-    tipoEgreso: string;
+    tipoEgreso: TipoEgreso;
+    tipoEgresoLabel: string;
     salarioBase: number;
     bonosMensuales: number;
     salarioMensualTotal: number;
@@ -149,14 +162,25 @@ function diasEnPeriodoBeneficio(
 
 // ─── FUNCIÓN PRINCIPAL ────────────────────────────────────────────────────────
 
+const LABELS_TIPO_EGRESO: Record<TipoEgreso, string> = {
+  despido_injustificado: "Despido injustificado (unilateral)",
+  renuncia_voluntaria:   "Renuncia voluntaria",
+  despido_justificado:   "Despido justificado",
+  mutuo_acuerdo:         "Mutuo Acuerdo",
+};
+
 export function calculatePrestaciones({
   fechaInicio,
   fechaFin,
   salarioBase,
   bonosMensuales = 0,
   diasVacacionesPendientes = 0,
-  esDespidoUnilateral = false,
+  tipoEgreso,
+  esDespidoUnilateral,
 }: CalculoPrestacionesParams): ResultadoPrestaciones {
+  // Compatibilidad retroactiva: si viene el booleano legacy, lo convertimos
+  const tipo: TipoEgreso =
+    tipoEgreso ?? (esDespidoUnilateral ? "despido_injustificado" : "renuncia_voluntaria");
   if (!fechaInicio || !fechaFin) {
     throw new Error("Las fechas de inicio y fin son obligatorias.");
   }
@@ -190,11 +214,21 @@ export function calculatePrestaciones({
 
   // ── 3. INDEMNIZACIÓN (Art. 82 CT) ────────────────────────────────────────
   /**
-   * Solo en despido unilateral. Factor 14/12 incluye aguinaldo y bono 14
-   * proporcionales en la base de cálculo (criterio MINTRAB + CC).
-   * En renuncia voluntaria no aplica (Art. 83 CT).
+   * Solo aplica en despido injustificado.
+   * Factor 14/12 incluye aguinaldo y bono 14 proporcionales en la base
+   * de cálculo (criterio MINTRAB + Corte de Constitucionalidad).
+   * - Renuncia voluntaria: no aplica (Art. 83 CT)
+   * - Despido justificado: no aplica (Art. 77 CT — causa justa del patrono)
+   * - Mutuo Acuerdo: no aplica — pero puede ser ilegal si encubre un despido
+   *   forzado (Art. 102 CPRG); se genera alerta roja en el dashboard.
    */
-  const indemnizacion: Indemnizacion = esDespidoUnilateral
+  const NO_APLICA_LABELS: Record<Exclude<TipoEgreso, "despido_injustificado">, string> = {
+    renuncia_voluntaria: "Art. 83 CT — Renuncia voluntaria no genera indemnización",
+    despido_justificado: "Art. 77 CT — Despido con causa justificada: sin indemnización",
+    mutuo_acuerdo:       "Art. 102 CPRG — Mutuo Acuerdo: sin indemnización (¡ALERTA: posible renuncia forzada!)",
+  };
+
+  const indemnizacion: Indemnizacion = tipo === "despido_injustificado"
     ? {
         aplica: true,
         fundamentoLegal: "Art. 82 Código de Trabajo (Decreto 1441)",
@@ -206,7 +240,7 @@ export function calculatePrestaciones({
       }
     : {
         aplica: false,
-        fundamentoLegal: "Art. 83 CT — Renuncia voluntaria no genera derecho a indemnización",
+        fundamentoLegal: NO_APLICA_LABELS[tipo],
         monto: 0,
       };
 
@@ -308,7 +342,8 @@ export function calculatePrestaciones({
     metadatos: {
       fechaInicio: inicio.toISOString().split("T")[0],
       fechaFin: fin.toISOString().split("T")[0],
-      tipoEgreso: esDespidoUnilateral ? "Despido unilateral" : "Renuncia voluntaria",
+      tipoEgreso: tipo,
+      tipoEgresoLabel: LABELS_TIPO_EGRESO[tipo],
       salarioBase,
       bonosMensuales,
       salarioMensualTotal,
@@ -331,9 +366,9 @@ export function calculatePrestaciones({
         monto: totalIrrenunciables,
       },
       granTotal: {
-        descripcion: esDespidoUnilateral
+        descripcion: tipo === "despido_injustificado"
           ? "Total Irrenunciables + Indemnización"
-          : "Total Irrenunciables (sin indemnización por renuncia voluntaria)",
+          : `Total Irrenunciables (${LABELS_TIPO_EGRESO[tipo]})`,
         monto: granTotal,
       },
     },

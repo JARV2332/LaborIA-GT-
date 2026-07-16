@@ -53,8 +53,12 @@ const ResultadosPage: NextPage = () => {
             </p>
             <h1 className="text-2xl font-extrabold leading-tight" style={{ color: "var(--color-text-primary)" }}>
               {resultado
-                ? formData.esDespidoUnilateral
+                ? formData.tipoEgreso === "despido_injustificado"
                   ? "Acá están tus derechos. Defendélos."
+                  : formData.tipoEgreso === "mutuo_acuerdo"
+                  ? "¡Cuidado! Revisá bien antes de firmar."
+                  : formData.tipoEgreso === "despido_justificado"
+                  ? "Lo que te corresponde aunque hayas sido despedido."
                   : "Acá está lo que te corresponde al renunciar."
                 : "Tus resultados"}
             </h1>

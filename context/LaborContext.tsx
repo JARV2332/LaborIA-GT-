@@ -5,9 +5,11 @@
  * para compartirlos entre pantallas sin prop-drilling.
  */
 import { createContext, useContext, useState, ReactNode } from "react";
-import type { ResultadoPrestaciones } from "@/utils/laborCalculations";
+import type { ResultadoPrestaciones, TipoEgreso } from "@/utils/laborCalculations";
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
+
+export type { TipoEgreso };
 
 export interface FormDataLaboral {
   fechaInicio: string;
@@ -16,7 +18,7 @@ export interface FormDataLaboral {
   tieneBonos: boolean;
   bonosMensuales: string;
   diasVacacionesPendientes: string;
-  esDespidoUnilateral: boolean;
+  tipoEgreso: TipoEgreso;
 }
 
 export interface OCRAlerta {
@@ -68,7 +70,7 @@ const FORM_INICIAL: FormDataLaboral = {
   tieneBonos: false,
   bonosMensuales: "",
   diasVacacionesPendientes: "0",
-  esDespidoUnilateral: true,
+  tipoEgreso: "despido_injustificado",
 };
 
 // ─── CONTEXTO ─────────────────────────────────────────────────────────────────

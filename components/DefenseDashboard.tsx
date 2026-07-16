@@ -362,7 +362,7 @@ function Semaforo({
   });
 
   // ── Alerta AMARILLA: Despido de palabra (Opción A sin documento) ──
-  const esDespidoDePalabra = formData.esDespidoUnilateral && !ocrResult;
+  const esDespidoDePalabra = formData.tipoEgreso === "despido_injustificado" && !ocrResult;
   if (esDespidoDePalabra) {
     alertas.push({
       nivel: "amarillo",

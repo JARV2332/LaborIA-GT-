@@ -28,7 +28,7 @@ interface FormState {
   salarioBase: string;
   bonosMensuales: string;
   diasVacacionesPendientes: string;
-  esDespidoUnilateral: boolean;
+  esDespidoUnilateral: boolean; // legacy — se mapea a tipoEgreso internamente
 }
 
 const INITIAL: FormState = {
@@ -66,7 +66,7 @@ const TestCalculo: NextPage = () => {
         salarioBase: parseFloat(form.salarioBase),
         bonosMensuales: parseFloat(form.bonosMensuales) || 0,
         diasVacacionesPendientes: parseInt(form.diasVacacionesPendientes) || 0,
-        esDespidoUnilateral: form.esDespidoUnilateral,
+        tipoEgreso: form.esDespidoUnilateral ? "despido_injustificado" : "renuncia_voluntaria",
       });
       setResultado(res);
       // Scroll suave al resultado en móvil

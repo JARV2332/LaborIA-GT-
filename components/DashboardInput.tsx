@@ -20,7 +20,12 @@ import {
   X,
   ToggleLeft,
   ToggleRight,
+  ShieldAlert,
+  Handshake,
+  LogOut,
+  Scale,
 } from "lucide-react";
+import type { TipoEgreso } from "@/context/LaborContext";
 import { useLaborContext } from "@/context/LaborContext";
 import { calculatePrestaciones } from "@/utils/laborCalculations";
 
@@ -56,7 +61,7 @@ export default function DashboardInput() {
                 salarioBase: parseFloat(formData.salarioBase),
                 bonosMensuales: formData.tieneBonos ? parseFloat(formData.bonosMensuales || "0") : 0,
                 diasVacacionesPendientes: parseInt(formData.diasVacacionesPendientes || "0"),
-                esDespidoUnilateral: formData.esDespidoUnilateral,
+                tipoEgreso: formData.tipoEgreso,
               });
               setResultado(res);
               router.push("/resultados");
@@ -243,23 +248,60 @@ function OpcionAForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Tipo de egreso */}
+      {/* Tipo de egreso — 4 categorías del Código de Trabajo */}
       <Card borderColor="var(--color-brand-navy)">
-        <SectionLabel icon={<ToggleRight size={15} />} text="Tipo de salida" />
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          <ToggleBtn
-            active={formData.esDespidoUnilateral}
-            color="green"
-            onClick={() => onChange({ esDespidoUnilateral: true })}
-            label="Me despidieron"
-            sub="Aplica indemnización"
+        <SectionLabel icon={<Scale size={15} />} text="¿Cómo terminó la relación laboral?" />
+        <p className="text-xs mt-1 mb-3" style={{ color: "var(--color-text-muted)" }}>
+          Seleccioná la opción que mejor describe tu situación. Esto define si aplica indemnización.
+        </p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <TipoEgresoCard
+            value="despido_injustificado"
+            selected={formData.tipoEgreso === "despido_injustificado"}
+            onSelect={() => onChange({ tipoEgreso: "despido_injustificado" })}
+            icon={<ShieldAlert size={18} />}
+            label="Me despidieron sin causa"
+            sub="Despido injustificado"
+            ley="Art. 82 CT"
+            nota="✅ Aplica indemnización completa"
+            accentColor="var(--color-brand-green)"
+            accentBg="#ecfdf5"
           />
-          <ToggleBtn
-            active={!formData.esDespidoUnilateral}
-            color="amber"
-            onClick={() => onChange({ esDespidoUnilateral: false })}
-            label="Voy a renunciar"
-            sub="Sin indemnización"
+          <TipoEgresoCard
+            value="renuncia_voluntaria"
+            selected={formData.tipoEgreso === "renuncia_voluntaria"}
+            onSelect={() => onChange({ tipoEgreso: "renuncia_voluntaria" })}
+            icon={<LogOut size={18} />}
+            label="Renuncié voluntariamente"
+            sub="Renuncia voluntaria"
+            ley="Art. 83 CT"
+            nota="ℹ️ Sin indemnización, pero sí irrenunciables"
+            accentColor="var(--color-brand-navy)"
+            accentBg="#dbeafe"
+          />
+          <TipoEgresoCard
+            value="despido_justificado"
+            selected={formData.tipoEgreso === "despido_justificado"}
+            onSelect={() => onChange({ tipoEgreso: "despido_justificado" })}
+            icon={<Scale size={18} />}
+            label="Me despidieron con causa"
+            sub="Despido justificado"
+            ley="Art. 77 CT"
+            nota="ℹ️ Sin indemnización si la causa fue válida"
+            accentColor="var(--color-brand-amber)"
+            accentBg="#fffbeb"
+          />
+          <TipoEgresoCard
+            value="mutuo_acuerdo"
+            selected={formData.tipoEgreso === "mutuo_acuerdo"}
+            onSelect={() => onChange({ tipoEgreso: "mutuo_acuerdo" })}
+            icon={<Handshake size={18} />}
+            label="Me piden firmar Mutuo Acuerdo"
+            sub="Mutuo Acuerdo"
+            ley="Art. 102 CPRG"
+            nota="🚨 ¡Alerta! Puede ser ilegal si fue forzado"
+            accentColor="#dc2626"
+            accentBg="#fef2f2"
           />
         </div>
       </Card>
@@ -704,41 +746,70 @@ function SectionLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
   );
 }
 
-function ToggleBtn({
-  active,
-  color,
-  onClick,
+function TipoEgresoCard({
+  selected,
+  onSelect,
+  icon,
   label,
   sub,
+  ley,
+  nota,
+  accentColor,
+  accentBg,
 }: {
-  active: boolean;
-  color: "green" | "amber";
-  onClick: () => void;
+  value: TipoEgreso;
+  selected: boolean;
+  onSelect: () => void;
+  icon: React.ReactNode;
   label: string;
   sub: string;
+  ley: string;
+  nota: string;
+  accentColor: string;
+  accentBg: string;
 }) {
-  const accent = color === "green" ? "var(--color-brand-green)" : "var(--color-brand-amber)";
-  const bg = color === "green" ? "#ecfdf5" : "#fffbeb";
-
   return (
     <button
       type="button"
-      onClick={onClick}
-      className="rounded-lg p-3 text-left transition-all"
+      onClick={onSelect}
+      className="flex flex-col gap-2 rounded-xl p-3 text-left transition-all"
       style={{
-        border: `2px solid ${active ? accent : "var(--color-surface-border)"}`,
-        backgroundColor: active ? bg : "#fff",
+        border: `2px solid ${selected ? accentColor : "var(--color-surface-border)"}`,
+        backgroundColor: selected ? accentBg : "#fff",
+        boxShadow: selected ? `0 0 0 3px ${accentColor}22` : "none",
       }}
     >
-      <p
-        className="text-sm font-bold"
-        style={{ color: active ? accent : "var(--color-text-primary)" }}
-      >
-        {label}
-      </p>
-      <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
-        {sub}
-      </p>
+      <div className="flex items-center gap-2">
+        <div
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+          style={{
+            backgroundColor: selected ? accentColor : "var(--color-surface-secondary)",
+            color: selected ? "#fff" : accentColor,
+          }}
+        >
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: accentColor }}>
+            {sub}
+          </p>
+          <p className="text-sm font-bold leading-tight" style={{ color: "var(--color-text-primary)" }}>
+            {label}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-1">
+        <span
+          className="rounded-full px-2 py-0.5 text-xs font-bold"
+          style={{ backgroundColor: accentBg, color: accentColor, border: `1px solid ${accentColor}44` }}
+        >
+          {ley}
+        </span>
+        {selected && (
+          <CheckCircle2 size={14} style={{ color: accentColor, flexShrink: 0 }} />
+        )}
+      </div>
+      <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>{nota}</p>
     </button>
   );
 }

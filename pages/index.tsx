@@ -17,7 +17,7 @@ const Home: NextPage = () => {
   return (
     <>
       <Head>
-        <title>LaborIA GT — Asesoría Laboral Inteligente</title>
+        <title>Mi Cuate Laboral — Asesoría Laboral Inteligente</title>
         <meta
           name="description"
           content="Plataforma de asesoría laboral con inteligencia artificial para Guatemala"
@@ -44,7 +44,7 @@ const Home: NextPage = () => {
                 className="text-lg font-bold tracking-tight"
                 style={{ color: "var(--color-text-inverse)" }}
               >
-                LaborIA <span style={{ color: "var(--color-brand-green)" }}>GT</span>
+                Mi Cuate <span style={{ color: "var(--color-brand-green)" }}>Laboral</span>
               </span>
             </div>
             <Link
@@ -157,7 +157,7 @@ const Home: NextPage = () => {
             color: "var(--color-text-muted)",
           }}
         >
-          © {new Date().getFullYear()} LaborIA GT — Todos los derechos reservados
+          © {new Date().getFullYear()} Mi Cuate Laboral — Todos los derechos reservados
         </footer>
       </div>
     </>
@@ -255,6 +255,8 @@ const SERVICES: ServiceCardProps[] = [
     description: "Analiza las cláusulas de tu contrato laboral ante la ley guatemalteca.",
     tag: "Nuevo",
     tagColor: "navy",
+    href: "/revision-contrato",
+    linkLabel: "Revisar mi contrato",
   },
   {
     icon: <Heart size={20} style={{ color: "var(--color-brand-amber)" }} />,
@@ -279,6 +281,8 @@ const SERVICES: ServiceCardProps[] = [
     description: "Aprende a identificar y denunciar situaciones de acoso en el trabajo.",
     tag: "Importante",
     tagColor: "green",
+    href: "/acoso-laboral",
+    linkLabel: "Conocer y actuar",
   },
   {
     icon: <CheckCircle2 size={20} style={{ color: "var(--color-brand-green)" }} />,

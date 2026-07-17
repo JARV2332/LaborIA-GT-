@@ -112,7 +112,7 @@ function PDFGenerator({
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(...WHITE);
-      doc.text("LaborIA GT", MARGEN, 15);
+      doc.text("Mi Cuate Laboral", MARGEN, 15);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
@@ -304,7 +304,7 @@ function PDFGenerator({
       doc.setFontSize(7);
       doc.setTextColor(148, 163, 184);
       doc.text(
-        "Generado por LaborIA GT — Plataforma de orientación laboral para trabajadores guatemaltecos",
+        "Generado por Mi Cuate Laboral — Plataforma de orientación para trabajadores guatemaltecos",
         W / 2, y, { align: "center" }
       );
       y += 4;
@@ -314,7 +314,7 @@ function PDFGenerator({
       );
 
       // ── GUARDAR ──
-      const nombreArchivo = `LaborIA_GT_Prestaciones_${new Date().toISOString().split("T")[0]}.pdf`;
+      const nombreArchivo = `Mi_Cuate_Laboral_Prestaciones_${new Date().toISOString().split("T")[0]}.pdf`;
       doc.save(nombreArchivo);
     } catch (e) {
       console.error("Error generando PDF:", e);
@@ -354,7 +354,7 @@ function PDFGenerator({
         {/* Preview del contenido */}
         <div className="space-y-2">
           {[
-            { label: "Encabezado institucional LaborIA GT", check: true },
+            { label: "Encabezado institucional Mi Cuate Laboral", check: true },
             { label: "Datos del período laboral", check: true },
             { label: "Tabla de cálculos con fórmulas explicadas", check: true },
             { label: "Gran Total destacado", check: true },

@@ -28,7 +28,7 @@ const CalculadoraPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Consultar mis derechos — LaborIA GT</title>
+        <title>Consultar mis derechos — Mi Cuate Laboral</title>
         <meta name="description" content="Calcula prestaciones, explora salarios y resuelve dudas laborales en Guatemala" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
@@ -44,7 +44,7 @@ const CalculadoraPage: NextPage = () => {
               <ArrowLeft size={16} style={{ color: "var(--color-text-muted)" }} />
               <Scale size={18} style={{ color: "var(--color-brand-green)" }} />
               <span className="font-bold text-sm" style={{ color: "#fff" }}>
-                LaborIA <span style={{ color: "var(--color-brand-green)" }}>GT</span>
+                Mi Cuate <span style={{ color: "var(--color-brand-green)" }}>Laboral</span>
               </span>
             </Link>
             <span

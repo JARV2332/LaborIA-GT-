@@ -243,7 +243,7 @@ const DerechosPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>¿A qué tengo derecho? — LaborIA GT</title>
+        <title>¿A qué tengo derecho? — Mi Cuate Laboral</title>
         <meta name="description" content="Guía interactiva de derechos laborales, IGSS e IRTRA en Guatemala." />
       </Head>
 
@@ -254,7 +254,7 @@ const DerechosPage: NextPage = () => {
               <ArrowLeft size={20} />
             </Link>
             <ShieldCheck size={21} style={{ color: "var(--color-brand-green-light)" }} />
-            <span className="font-bold text-white">LaborIA GT</span>
+            <span className="font-bold text-white">Mi Cuate Laboral</span>
             <span className="ml-auto rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">Mis derechos</span>
           </div>
         </nav>

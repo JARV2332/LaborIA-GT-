@@ -79,7 +79,7 @@ FORMATO JSON DE RESPUESTA OBLIGATORIO (devuelve SOLO esto, sin markdown, sin tex
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: "10mb",
+      sizeLimit: "15mb",
     },
   },
 };
@@ -89,15 +89,27 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método no permitido. Usa POST." });
   }
 
-  const { base64, mimeType } = req.body;
+  const { base64, mimeType, images } = req.body;
+  const archivos = Array.isArray(images) && images.length > 0
+    ? images
+    : base64 && mimeType
+      ? [{ base64, mimeType }]
+      : [];
 
-  if (!base64 || !mimeType) {
-    return res.status(400).json({ error: "Se requieren los campos base64 y mimeType." });
+  if (archivos.length === 0) {
+    return res.status(400).json({ error: "Se requiere al menos una imagen del documento." });
   }
 
-  const TIPOS_VALIDOS = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-  if (!TIPOS_VALIDOS.includes(mimeType)) {
-    return res.status(400).json({ error: `Tipo de archivo no soportado: ${mimeType}. Usa JPG, PNG o PDF.` });
+  if (archivos.length > 6) {
+    return res.status(400).json({ error: "Solo se pueden analizar hasta 6 páginas por documento." });
+  }
+
+  const TIPOS_VALIDOS = ["image/jpeg", "image/png", "image/webp"];
+  const archivoInvalido = archivos.find(
+    (archivo) => !archivo?.base64 || !TIPOS_VALIDOS.includes(archivo?.mimeType)
+  );
+  if (archivoInvalido) {
+    return res.status(400).json({ error: "Formato no soportado. Envía imágenes JPG, PNG o WebP." });
   }
 
   if (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY) {
@@ -108,13 +120,13 @@ export default async function handler(req, res) {
     const openai = getClient();
     const model = process.env.GROQ_VISION_MODEL || process.env.OPENAI_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
 
-    // Para PDFs, OpenAI Vision no los acepta directamente —
-    // se interpreta la primera página como imagen si viene como PNG/JPG,
-    // o se envía el base64 como URL de datos para imágenes.
-    const imageUrl =
-      mimeType === "application/pdf"
-        ? `data:image/png;base64,${base64}` // El cliente debe convertir PDF→imagen antes
-        : `data:${mimeType};base64,${base64}`;
+    const contenidoPaginas = archivos.map((archivo) => ({
+      type: "image_url",
+      image_url: {
+        url: `data:${archivo.mimeType};base64,${archivo.base64}`,
+        detail: "high",
+      },
+    }));
 
     const completion = await openai.chat.completions.create({
       model,
@@ -125,13 +137,10 @@ export default async function handler(req, res) {
         {
           role: "user",
           content: [
-            {
-              type: "image_url",
-              image_url: { url: imageUrl, detail: "high" },
-            },
+            ...contenidoPaginas,
             {
               type: "text",
-              text: "Analiza este documento laboral guatemalteco y devuelve ÚNICAMENTE el JSON estructurado según las instrucciones del sistema.",
+              text: `Analiza las ${archivos.length} página(s) de este documento laboral guatemalteco como un solo documento. Busca cláusulas perjudiciales incluso en letra pequeña y devuelve ÚNICAMENTE el JSON estructurado según las instrucciones del sistema.`,
             },
           ],
         },

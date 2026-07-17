@@ -85,7 +85,7 @@ const TestCalculo: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Calculadora de Prestaciones — LaborIA GT</title>
+        <title>Calculadora de Prestaciones — Mi Cuate Laboral</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -98,7 +98,7 @@ const TestCalculo: NextPage = () => {
           <div className="mx-auto flex max-w-lg items-center gap-2">
             <Scale size={20} style={{ color: "var(--color-brand-green)" }} />
             <span className="font-bold text-base" style={{ color: "#fff" }}>
-              LaborIA <span style={{ color: "var(--color-brand-green)" }}>GT</span>
+              Mi Cuate <span style={{ color: "var(--color-brand-green)" }}>Laboral</span>
             </span>
             <span
               className="ml-auto text-xs px-2 py-0.5 rounded-full font-semibold"

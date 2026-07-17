@@ -302,7 +302,7 @@ export default function LegalConsultant() {
             <Scale size={16} color="#fff" />
           </div>
           <div>
-            <p className="text-sm font-bold" style={{ color: "#fff" }}>LaborIA — Asesor Legal GT</p>
+            <p className="text-sm font-bold" style={{ color: "#fff" }}>Mi Cuate Laboral — Asesor Legal</p>
             <div className="flex items-center gap-1">
               <div className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: "var(--color-brand-green)" }} />
               <p className="text-xs" style={{ color: "var(--color-brand-green-light)" }}>En línea</p>

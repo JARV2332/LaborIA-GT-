@@ -16,7 +16,7 @@ const ResultadosPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Tus resultados — LaborIA GT</title>
+        <title>Tus resultados — Mi Cuate Laboral</title>
         <meta name="description" content="Resultado de tus prestaciones laborales según el Código de Trabajo de Guatemala" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
@@ -32,7 +32,7 @@ const ResultadosPage: NextPage = () => {
               <ArrowLeft size={16} style={{ color: "var(--color-text-muted)" }} />
               <Scale size={18} style={{ color: "var(--color-brand-green)" }} />
               <span className="font-bold text-sm" style={{ color: "#fff" }}>
-                LaborIA <span style={{ color: "var(--color-brand-green)" }}>GT</span>
+                Mi Cuate <span style={{ color: "var(--color-brand-green)" }}>Laboral</span>
               </span>
             </Link>
             <span

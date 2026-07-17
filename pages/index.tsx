@@ -10,6 +10,7 @@ import {
   Users,
   FileText,
   ArrowRight,
+  Heart,
 } from "lucide-react";
 
 const Home: NextPage = () => {
@@ -148,42 +149,6 @@ const Home: NextPage = () => {
           </div>
         </section>
 
-        {/* ── DESIGN TOKENS PREVIEW (solo dev) ── */}
-        <section
-          className="px-4 py-10"
-          style={{ backgroundColor: "var(--color-surface-secondary)" }}
-        >
-          <div className="mx-auto max-w-5xl">
-            <p
-              className="mb-5 text-xs font-semibold uppercase tracking-widest"
-              style={{ color: "var(--color-text-muted)" }}
-            >
-              Design Tokens — Legal-Tech Palette
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {TOKENS.map((t) => (
-                <div key={t.label} className="flex items-center gap-2">
-                  <div
-                    className="h-8 w-8 rounded-lg border"
-                    style={{
-                      backgroundColor: t.hex,
-                      borderColor: "var(--color-surface-border)",
-                    }}
-                  />
-                  <div>
-                    <p className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                      {t.label}
-                    </p>
-                    <p className="font-mono text-xs" style={{ color: "var(--color-text-muted)" }}>
-                      {t.hex}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── FOOTER ── */}
         <footer
           className="px-4 py-6 text-center text-xs"
@@ -207,6 +172,7 @@ interface ServiceCardProps {
   tag: string;
   tagColor: "green" | "amber" | "navy";
   href?: string;
+  linkLabel?: string;
 }
 
 const TAG_STYLES: Record<string, React.CSSProperties> = {
@@ -215,7 +181,7 @@ const TAG_STYLES: Record<string, React.CSSProperties> = {
   navy:  { backgroundColor: "#dbeafe", color: "#1e3a8a" },
 };
 
-function ServiceCard({ icon, title, description, tag, tagColor, href }: ServiceCardProps) {
+function ServiceCard({ icon, title, description, tag, tagColor, href, linkLabel }: ServiceCardProps) {
   const inner = (
     <>
       <div
@@ -241,7 +207,7 @@ function ServiceCard({ icon, title, description, tag, tagColor, href }: ServiceC
             className="mt-2 inline-flex items-center gap-1 text-xs font-semibold"
             style={{ color: "var(--color-brand-green)" }}
           >
-            Ir a calculadora <ArrowRight size={12} />
+            {linkLabel ?? "Ver detalles"} <ArrowRight size={12} />
           </span>
         )}
       </div>
@@ -291,11 +257,13 @@ const SERVICES: ServiceCardProps[] = [
     tagColor: "navy",
   },
   {
-    icon: <AlertTriangle size={20} style={{ color: "var(--color-brand-amber)" }} />,
-    title: "Despido injustificado",
-    description: "Conoce tus derechos si fuiste despedido sin causa justificada.",
-    tag: "Urgente",
+    icon: <Heart size={20} style={{ color: "var(--color-brand-amber)" }} />,
+    title: "¿A qué tengo derecho?",
+    description: "Conoce tus permisos y protecciones por matrimonio, nacimiento, enfermedad, duelo o embarazo.",
+    tag: "Vida laboral",
     tagColor: "amber",
+    href: "/derechos",
+    linkLabel: "Explorar mis derechos",
   },
   {
     icon: <Briefcase size={20} style={{ color: "var(--color-brand-navy)" }} />,
@@ -319,16 +287,6 @@ const SERVICES: ServiceCardProps[] = [
     tag: "Frecuente",
     tagColor: "green",
   },
-];
-
-const TOKENS = [
-  { label: "brand-dark",   hex: "#0f172a" },
-  { label: "brand-navy",   hex: "#1e3a8a" },
-  { label: "brand-green",  hex: "#059669" },
-  { label: "brand-amber",  hex: "#f59e0b" },
-  { label: "surface",      hex: "#f8fafc" },
-  { label: "text-primary", hex: "#0f172a" },
-  { label: "text-secondary", hex: "#475569" },
 ];
 
 export default Home;

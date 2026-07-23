@@ -13,6 +13,11 @@
  */
 
 import OpenAI from "openai";
+import {
+  checkRateLimit,
+  getClientIp,
+  buildLimitExceededPayload,
+} from "../../utils/rateLimit";
 
 function getClient() {
   const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
@@ -117,6 +122,22 @@ export default async function handler(req, res) {
 
   if (mensaje.trim().length > 1000) {
     return res.status(400).json({ error: "La pregunta es demasiado larga (máximo 1000 caracteres)." });
+  }
+
+  // Freemium: N chats gratis por IP / hora (default 3)
+  const chatLimit = Number(process.env.RATE_LIMIT_CHAT || 3);
+  const chatWindowMs = Number(process.env.RATE_LIMIT_CHAT_WINDOW_MS || 60 * 60 * 1000);
+  const ip = getClientIp(req);
+  const rate = checkRateLimit(`chat:${ip}`, chatLimit, chatWindowMs);
+
+  if (!rate.allowed) {
+    const payload = buildLimitExceededPayload({
+      featureLabel: "consultas al chat",
+      limit: rate.limit,
+      resetAt: rate.resetAt,
+    });
+    res.setHeader("Retry-After", Math.ceil((rate.resetAt - Date.now()) / 1000));
+    return res.status(429).json(payload);
   }
 
   if (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY) {

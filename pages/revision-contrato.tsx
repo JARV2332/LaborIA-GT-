@@ -84,6 +84,9 @@ const RevisionContrato: NextPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 429 && data.upgradeEmail) {
+          throw new Error(`${data.error}\n\n📧 Escribinos a: ${data.upgradeEmail}`);
+        }
         throw new Error(data.error || "No fue posible analizar el documento.");
       }
 

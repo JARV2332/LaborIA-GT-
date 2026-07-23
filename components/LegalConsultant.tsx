@@ -240,6 +240,11 @@ export default function LegalConsultant() {
       setEscribiendo(false);
 
       if (!response.ok) {
+        if (response.status === 429 && data.upgradeEmail) {
+          throw new Error(
+            `${data.error}\n\n📧 Escribinos a: ${data.upgradeEmail}`
+          );
+        }
         throw new Error(data.error || "Error al consultar.");
       }
 

@@ -14,6 +14,11 @@
  */
 
 import OpenAI from "openai";
+import {
+  checkRateLimit,
+  getClientIp,
+  buildLimitExceededPayload,
+} from "../../utils/rateLimit";
 
 // Groq es compatible con el SDK de OpenAI — solo cambia la baseURL y la key
 function getClient() {
@@ -110,6 +115,22 @@ export default async function handler(req, res) {
   );
   if (archivoInvalido) {
     return res.status(400).json({ error: "Formato no soportado. Envía imágenes JPG, PNG o WebP." });
+  }
+
+  // Freemium: N análisis gratis por IP / día (default 3)
+  const analyzeLimit = Number(process.env.RATE_LIMIT_ANALYZE || 3);
+  const analyzeWindowMs = Number(process.env.RATE_LIMIT_ANALYZE_WINDOW_MS || 24 * 60 * 60 * 1000);
+  const ip = getClientIp(req);
+  const rate = checkRateLimit(`analyze:${ip}`, analyzeLimit, analyzeWindowMs);
+
+  if (!rate.allowed) {
+    const payload = buildLimitExceededPayload({
+      featureLabel: "análisis de documentos",
+      limit: rate.limit,
+      resetAt: rate.resetAt,
+    });
+    res.setHeader("Retry-After", Math.ceil((rate.resetAt - Date.now()) / 1000));
+    return res.status(429).json(payload);
   }
 
   if (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY) {

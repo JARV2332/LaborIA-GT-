@@ -520,6 +520,11 @@ function OpcionBDrop({
 
         if (!response.ok) {
           const errData = await response.json();
+          if (response.status === 429 && errData.upgradeEmail) {
+            throw new Error(
+              `${errData.error}\n\n📧 Escribinos a: ${errData.upgradeEmail}`
+            );
+          }
           throw new Error(errData.error || "Error al analizar el documento.");
         }
 
